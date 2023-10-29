@@ -1,6 +1,6 @@
 ﻿namespace QuoridorAI.BoardStuff
 {
-    public class Node
+    public sealed class Node
     {
         public readonly int x;
         public readonly int y;

@@ -23,6 +23,8 @@ namespace QuoridorAI.BoardStuff
         public Player Player => WhiteToMove ? white : black;
         public Player Opponent => WhiteToMove ? black : white;
 
+        public bool SimplifiedRules = true;
+
         public Board()
         {
             walls = new byte[W, W];
@@ -71,10 +73,11 @@ namespace QuoridorAI.BoardStuff
             }
         }
 
-        public void SetBoard(bool[,] verticalWalls, bool[,] horizontalWalls, bool whiteToMove)
+        public void SetBoard(bool[,] verticalWalls, bool[,] horizontalWalls, bool whiteToMove, bool simplifiedRules = true)
         {
             Reset();
             WhiteToMove = whiteToMove;
+            SimplifiedRules = simplifiedRules;  
             for (int y = 0; y < W; y++)
             {
                 for (int x = 0; x < W; x++)
@@ -90,72 +93,75 @@ namespace QuoridorAI.BoardStuff
 
         }
 
+        //does no loanger validate the move as the MoveGenerator should only genberate pseudo leagal moves
         public bool DoMove(Move move)
         {
 
             if (move.type == MoveType.Move)
             {
-                if (ValidatePlayerMove(Player, move.x, move.y))
-                {
-                    Player.PushHistory();
-                    Player.pos = new Point(move.x, move.y);
-                    //compute new path? yes... maybe no if the path is the same  !!
-                    ComputePath(whitePath, Player);
-                    Player.SetPath(whitePath.ToArray());
+                //if (ValidatePlayerMove(Player, move.x, move.y))
+                //{
+                Player.PushHistory();
+                Player.pos = new Point(move.x, move.y);
+                //compute new path? yes... maybe no if the path is the same  !!
+                ComputePath(whitePath, Player);
+                Player.SetPath(whitePath.ToArray());
 
-                    WhiteToMove = !WhiteToMove;
-                    return true;
-                }
-                return false;
+                WhiteToMove = !WhiteToMove;
+                return true;
+                //}
+                //return false;
             }
-            if (Player.walls <= 0) return false;
-            if (ValidateWall(move.x, move.y, move.type == MoveType.Horizontal))
+            //if (Player.walls <= 0) return false; //the AI does not need this, it was for manual play
+            //if (ValidateWall(move.x, move.y, move.type == MoveType.Horizontal))
+            //{
+
+            AddWall(move.x, move.y, move.type == MoveType.Horizontal); // accually add the wall
+
+            bool whiteHasPath = ComputePath(whitePath, white);
+            bool blackHasPath = ComputePath(blackPath, black);
+
+            if (whiteHasPath && blackHasPath) //the wall should not block any player from reaching its goal!
             {
+                Player.walls--; //player should loose a wall
 
-                AddWall(move.x, move.y, move.type == MoveType.Horizontal); // accually add the wall
+                WhiteToMove = !WhiteToMove;
 
-                bool whiteHasPath = ComputePath(whitePath, white);
-                bool blackHasPath = ComputePath(blackPath, black);
-
-                if (whiteHasPath && blackHasPath)
-                {
-                    Player.walls--; //player should loose a wall
-
-                    WhiteToMove = !WhiteToMove;
-
-                    white.PushHistory();
-                    white.SetPath(whitePath.ToArray());
-                    black.PushHistory();
-                    black.SetPath(blackPath.ToArray());
-                    return true;
-                }
-                else
-                {
-                    RemoveWall(move.x, move.y, move.type == MoveType.Horizontal);
-                }
-
+                white.PushHistory();
+                white.SetPath(whitePath.ToArray());
+                black.PushHistory();
+                black.SetPath(blackPath.ToArray());
+                return true;
             }
+            else
+            {
+                RemoveWall(move.x, move.y, move.type == MoveType.Horizontal); //if it blocks -> remove it!
+            }
+
+            //}
 
             return false;
         }
 
-        private bool ValidateWall(int x, int y, bool horizontal)
+        public bool ValidateWall(int x, int y, bool horizontal)
         {
-            if (x < 0 || x >= W) return false;
-            if (y < 0 || y >= W) return false;
+            //if (x < 0 || x >= W) return false;
+            //if (y < 0 || y >= W) return false;
 
-            //if (MatchWall(x, y, 3)) return false; // to avoid cross walls
+            byte wallmask = horizontal ? (byte)1 : (byte)2;
+            byte crossmask = SimplifiedRules ? wallmask : (byte)3;
+            if (MatchWall(x, y, crossmask)) return false;
 
             if (horizontal)
             {
                 if (MatchWall(x - 1, y, 1)) return false;
-                if (MatchWall(x, y, 1)) return false; // to avoid cross wall we can move this out an set 3 as mask
+                //if (MatchWall(x, y, 1)) return false; // to avoid cross wall we can move this out an set 3 as mask
                 if (MatchWall(x + 1, y, 1)) return false;
             }
             else
             {
                 if (MatchWall(x, y + 1, 2)) return false;
-                if (MatchWall(x, y, 2)) return false;
+                //if (MatchWall(x, y, 2)) return false;
                 if (MatchWall(x, y - 1, 2)) return false;
             }
 
@@ -199,7 +205,7 @@ namespace QuoridorAI.BoardStuff
                 RemoveWall(move.x, move.y, move.type == MoveType.Horizontal);
                 Player.walls++; // get back the wall
 
-                //pop all histories as walls my screwed both paths
+                //pop all histories as walls may screwed both paths
                 white.PopHistory();
                 black.PopHistory();
             }

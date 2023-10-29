@@ -28,6 +28,8 @@ namespace QuoridorAI.SearchStuff
             moveComparer = new MoveComparer(scoreBoard);
         }
 
+        //this generate all move possible, does not check leagality or even psuodo leagal (as duplicate walls)
+        //according to profiling its the pathfinding that is >80% of cpu time so not sure if doing pseudo leagal will help much so I dont at this time...
         public List<Move> GetMoves(bool addPrevTopMove = false, Move prevTopMove = default)
         {
             Player player = board.Player;
@@ -37,24 +39,43 @@ namespace QuoridorAI.SearchStuff
 
             //presumably the along path should be searched first
             Player opponent = board.Opponent;
-            if (player.currentPath != null && player.currentPath.Length > 0) //too many checks?
+            //if (player.currentPath != null && player.currentPath.Length > 0) //too many checks?
+            //{
+            //    Point p = player.currentPath[^1];
+            //    AddMove(moves, p, MoveType.Move); //prio the move along the path
+            //}
+
+            //AddScore(player.pos, 40);
+            if (!board.SimplifiedRules)
             {
-                Point p = player.currentPath[^1];
-                AddMove(moves, new Move(p, MoveType.Move)); //prio the move along the path
+                GenerateWalkMoves(moves);
+            }
+            else
+            {
+                if (player.currentPath != null && player.currentPath.Length > 0) //too many checks?
+                {
+                    Point p = player.currentPath[^1];
+                    AddMove(moves, p, MoveType.Move); //prio the move along the path
+                }
+                Node node = board.grid[player.pos.X, player.pos.Y];
+                if (node.north) AddMove(moves, player.pos + n, MoveType.Move);
+                if (node.west) AddMove(moves, player.pos + w, MoveType.Move);
+                if (node.east) AddMove(moves, player.pos + e, MoveType.Move);
+                if (node.south) AddMove(moves, player.pos + s, MoveType.Move);
+                //AddMove(moves, player.pos + n, MoveType.Move);
+                //AddMove(moves, player.pos + e, MoveType.Move);
+                //AddMove(moves, player.pos + w, MoveType.Move);
+                //AddMove(moves, player.pos + s, MoveType.Move);
             }
 
-            //AddMove(moves, new Move(players[playerTurn].pos + n, Move.Type.Move));
-            //AddMove(moves, new Move(players[playerTurn].pos + e, Move.Type.Move));
-            //AddMove(moves, new Move(players[playerTurn].pos + w, Move.Type.Move));
-            //AddMove(moves, new Move(players[playerTurn].pos + s, Move.Type.Move));
 
             if (player.walls > 0)
             {
                 //they are in here because if we dont have walls just go for the closest... in theory enemy would block some paths but we cannot see far enough ahead to be sure
-                AddMove(moves, new Move(player.pos + n, MoveType.Move));
-                AddMove(moves, new Move(player.pos + e, MoveType.Move));
-                AddMove(moves, new Move(player.pos + w, MoveType.Move));
-                AddMove(moves, new Move(player.pos + s, MoveType.Move));
+                //AddMove(moves, player.pos + n, MoveType.Move);
+                //AddMove(moves, player.pos + e, MoveType.Move);
+                //AddMove(moves, player.pos + w, MoveType.Move);
+                //AddMove(moves, player.pos + s, MoveType.Move);
 
                 // add wall moves
                 for (int y = 0; y < board.N; y++)
@@ -70,22 +91,22 @@ namespace QuoridorAI.SearchStuff
                     Point p = opponent.currentPath[i];
                     AddScore(p, 5);
                     AddScore(p + n, 5);
-                    AddScore(p + w, 5);
+                    AddScore(p + w, 1);
                     AddScore(p + e, 5);
-                    AddScore(p + s, 5);
-                    AddScore(p + se, 5);
-                    AddScore(p + sw, 5);
+                    AddScore(p + s, 1);
+                    AddScore(p + se, 1);
+                    AddScore(p + sw, 1);
                     AddScore(p + ne, 5);
-                    AddScore(p + nw, 5);
+                    AddScore(p + nw, 1);
                 }
                 for (int i = player.currentPath.Length - 1; i >= 0; --i)
                 {
                     Point p = player.currentPath[i];
-                    AddScore(p);
-                    AddScore(p + n);
-                    AddScore(p + w);
-                    AddScore(p + e);
-                    AddScore(p + s);
+                    AddScore(p, 40);
+                    AddScore(p + n,5);
+                    AddScore(p + w,5);
+                    AddScore(p + e,5);
+                    AddScore(p + s,5);
                     AddScore(p + se);
                     AddScore(p + sw);
                     AddScore(p + ne);
@@ -97,8 +118,10 @@ namespace QuoridorAI.SearchStuff
                 {
                     for (int x = 0; x < board.W; x++)
                     {
-                        moves.Add(new Move(x, y, MoveType.Horizontal)); // maybe only add if we dont have walls colliding??
-                        moves.Add(new Move(x, y, MoveType.Vertical));
+                        if (board.ValidateWall(x,y, true))
+                            moves.Add(new Move(x, y, MoveType.Horizontal));
+                        if (board.ValidateWall(x, y, false))
+                            moves.Add(new Move(x, y, MoveType.Vertical));
                     }
                 }
                 //moves.Sort(moveComparer); //sort lo to hi
@@ -107,6 +130,123 @@ namespace QuoridorAI.SearchStuff
 
             return moves;
         }
+
+        public void GenerateWalkMoves(List<Move> moves)
+        {
+            Player player = board.Player;
+            Point opp = board.Opponent.pos;
+            Point pos = player.pos;
+            Node node = board.grid[pos.X, pos.Y];
+            if (node.north)
+            {
+                Point to = pos + n;
+                if (to == opp)
+                {
+                    Node next = board.grid[to.X, to.Y];
+                    if (next.north)
+                    {
+                        AddMove(moves, to + n, MoveType.Move);
+                    }
+                    else
+                    {
+                        if (next.west)
+                        {
+                            AddMove(moves, to + w, MoveType.Move);
+                        }
+                        if (next.east)
+                        {
+                            AddMove(moves, to + e, MoveType.Move);
+                        }
+                    }
+                }
+                else
+                {
+                    AddMove(moves, to, MoveType.Move);
+                }
+            }
+            if (node.south)
+            {
+                Point to = pos + s;
+                if (to == opp)
+                {
+                    Node next = board.grid[to.X, to.Y];
+                    if (next.north)
+                    {
+                        AddMove(moves, to + s, MoveType.Move);
+                    }
+                    else
+                    {
+                        if (next.west)
+                        {
+                            AddMove(moves, to + w, MoveType.Move);
+                        }
+                        if (next.east)
+                        {
+                            AddMove(moves, to + e, MoveType.Move);
+                        }
+                    }
+                }
+                else
+                {
+                    AddMove(moves, to, MoveType.Move);
+                }
+            }
+            if (node.west)
+            {
+                Point to = pos + w;
+                if (to == opp)
+                {
+                    Node next = board.grid[to.X, to.Y];
+                    if (next.west)
+                    {
+                        AddMove(moves, to + w, MoveType.Move);
+                    }
+                    else
+                    {
+                        if (next.north)
+                        {
+                            AddMove(moves, to + n, MoveType.Move);
+                        }
+                        if (next.south)
+                        {
+                            AddMove(moves, to + s, MoveType.Move);
+                        }
+                    }
+                }
+                else
+                {
+                    AddMove(moves, to, MoveType.Move);
+                }
+            }
+            if (node.east)
+            {
+                Point to = pos + e;
+                if (to == opp)
+                {
+                    Node next = board.grid[to.X, to.Y];
+                    if (next.west)
+                    {
+                        AddMove(moves, to + e, MoveType.Move);
+                    }
+                    else
+                    {
+                        if (next.north)
+                        {
+                            AddMove(moves, to + n, MoveType.Move);
+                        }
+                        if (next.south)
+                        {
+                            AddMove(moves, to + s, MoveType.Move);
+                        }
+                    }
+                }
+                else
+                {
+                    AddMove(moves, to, MoveType.Move);
+                }
+            }
+        }
+
 
 
         private void AddScore(Point point, int score = 1)
@@ -118,8 +258,11 @@ namespace QuoridorAI.SearchStuff
             scoreBoard[x, y] -= score; //sorted lo to hi, ie low score is good
         }
 
-        private void AddMove(List<Move> moves, Move move)
+        private void AddMove(List<Move> moves, Point point, MoveType type)
         {
+            if (point.X < 0 || point.X >= board.N) return;
+            if (point.Y < 0 || point.Y >= board.N) return;
+            Move move = new(point, type);
             if (!moves.Contains(move)) moves.Add(move);
         }
     }
@@ -141,8 +284,8 @@ namespace QuoridorAI.SearchStuff
 
         private int GetScore(int x, int y)
         {
-            if (x < 0 || x > 8) return 9999;
-            if (y < 0 || y > 8) return 9999;
+            //if (x < 0 || x > 9) return 9999;
+            //if (y < 0 || y > 9) return 9999;
 
             return scoreBoard[x, y];
         }

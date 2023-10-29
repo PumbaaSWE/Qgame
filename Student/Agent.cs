@@ -21,25 +21,24 @@ class Agent:BaseAgent {
         moveGenerator = new MoveGenerator(board);
         searcher = new Searcher(board, evaluator, moveGenerator);
     }
-    public override Drag SökNästaDrag(SpelBräde bräde) { //Spelbräde är ETT ORD!!!!!!!!!!!!!!!!!ADSFRGSSZDFHGSZXDFHGSHZFGD
+    public override Drag SökNästaDrag(SpelBräde bräde) {
 
         bool whiteToMove = bräde.spelare[0].färg == Färg.Röd;
         board.WhiteToMove = whiteToMove;
-
-        if (whiteToMove)
-        {
-            evaluator.WallWeight = 2;
-            evaluator.PathWeight = 3;
-        }
-        else
-        {
-            evaluator.WallWeight = 4;
-            evaluator.PathWeight = 2;
-        }
+        //if (whiteToMove)
+        //{
+        //    evaluator.WallWeight = 2;
+        //    evaluator.PathWeight = 3;
+        //}
+        //else
+        //{
+        //    evaluator.WallWeight = 4;
+        //    evaluator.PathWeight = 2;
+        //}
 
         board.Player.SetPlayer(bräde.spelare[0].position, bräde.spelare[0].antalVäggar, 8);
         board.Opponent.SetPlayer(bräde.spelare[1].position, bräde.spelare[1].antalVäggar, 0);
-        board.SetBoard(bräde.vertikalaLångaVäggar, bräde.horisontellaLångaVäggar, whiteToMove);
+        board.SetBoard(bräde.vertikalaLångaVäggar, bräde.horisontellaLångaVäggar, whiteToMove, !bräde.avanceradeRegler);
 
         Move move = searcher.BeginSearch();
         Drag drag = new()

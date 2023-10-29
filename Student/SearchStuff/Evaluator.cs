@@ -19,12 +19,14 @@ namespace QuoridorAI.SearchStuff
             if (board.white.pos.Y == board.white.targetRank) return LooseScore * turn; //cannot be infinity as false moves might score equal
             if (board.black.pos.Y == board.black.targetRank) return -LooseScore * turn; //(ie still do a move even if you loose, nothing else might be availible) 
 
+            int whiteWalls = board.white.walls;
+            int blackWalls = board.black.walls;
+
             int whitePathLen = board.white.currentPath.Length;
             int blackPathLen = board.black.currentPath.Length;
 
-
-            int whiteWalls = board.white.walls;
-            int blackWalls = board.black.walls;
+            //if (whiteWalls == 0) whitePathLen = 0;
+            //if (blackWalls == 0) blackPathLen = 0;
 
             int eval = (blackPathLen - whitePathLen) * PathWeight + (whiteWalls - blackWalls) * WallWeight;
 

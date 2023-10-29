@@ -7,15 +7,17 @@ namespace QuoridorAI.SearchStuff
 {
     public class Searcher
     {
-        Board board;
-        Evaluator evaluator;
-        MoveGenerator moveGenerator;
+        private readonly Board board;
+        private readonly Evaluator evaluator;
+        private readonly MoveGenerator moveGenerator;
 
 
         private const int posInf = 99999;
         private const int negInf = -posInf;
 
         public Move bestMove;
+        private int searchDepth = 3;
+        public int Depth { get { return searchDepth + 1; } set { searchDepth = value - 1; } } //-1 because the initial call adds one
         int moveCount = 0;
 
         public Searcher(Board board, Evaluator evaluator, MoveGenerator moveGenerator)
@@ -37,7 +39,7 @@ namespace QuoridorAI.SearchStuff
                 Move move = moves[i];
                 if (board.DoMove(move))
                 {
-                    int eval = -AlphaBeta(2, negInf, -bestEval); //this is the maximizing par whitch means we have to swap signs
+                    int eval = -AlphaBeta(searchDepth, bestEval, -bestEval); //this is the maximizing par whitch means we have to swap signs
                     //Debug.WriteLine(move + ", eval=" + eval);
                     moveCount++;
                     board.UndoMove(move);
