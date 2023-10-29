@@ -108,7 +108,7 @@ namespace QuoridorAI.BoardStuff
                 }
                 return false;
             }
-            if (Player.walls <= 0) return false;
+            //if (Player.walls <= 0) return false;
             if (ValidateWall(move.x, move.y, move.type == MoveType.Horizontal))
             {
 

@@ -5,7 +5,7 @@ namespace QuoridorAI.SearchStuff
     public class Evaluator
     {
         private readonly Board board;
-        public int PathWeight = 3;
+        public int PathWeight = 10;
         public int WallWeight = 1;
         public int LooseScore = 9998;
         public Evaluator(Board board)

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace QuoridorAI.BoardStuff
 {
-    public class Player
+    public sealed class Player
     {
         public Point pos;
         public int targetRank = 0;
