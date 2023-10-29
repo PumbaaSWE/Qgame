@@ -6,8 +6,32 @@ using System.Diagnostics;
 
 class Agent:BaseAgent {
     [STAThread]
-    static void Main() {
+    static void Main(string[] args) {
+        //for (int i = 0; i < args.Length; i++)
+        //{
+        //    if (args[i] == "-d")
+        //    {
+        //        int depth = TryGetInt(args, ++i, "-d");
+        //    }
+        //    else if (args[i] == "-w")
+        //    {
+        //        int weight = TryGetInt(args, ++i, "-d");
+        //    }
+        //}
         Program.Start(new Agent());
+    }
+
+    private static int TryGetInt(string[] args, int i , string match)
+    {
+        if(i >= args.Length)
+        {
+            throw new ArgumentException("Expected int after argument: " + match);
+        }
+        if (!int.TryParse(args[i], out int nbr))
+        {
+            throw new ArgumentException("Expected int after argument: " + match + " but got: " + args[i]);
+        }
+        return nbr;
     }
 
     Board board;

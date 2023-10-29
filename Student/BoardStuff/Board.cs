@@ -114,30 +114,62 @@ namespace QuoridorAI.BoardStuff
 
                 AddWall(move.x, move.y, move.type == MoveType.Horizontal); // accually add the wall
 
-                bool whiteHasPath = ComputePath(whitePath, white);
-                bool blackHasPath = ComputePath(blackPath, black);
-
-                if (whiteHasPath && blackHasPath)
+                bool whiteHasValidPath = CheckPathValidity(white.pos, white.currentPath); //I think many walls will not interfer with the path, so I'll only recompute if it does
+                bool whiteHasPath = whiteHasValidPath || ComputePath(whitePath, white);
+                if (whiteHasPath)
                 {
-                    Player.walls--; //player should loose a wall
+                    bool blackHasValidPath = CheckPathValidity(black.pos, black.currentPath);
+                    bool blackHasPath = blackHasValidPath || ComputePath(blackPath, black);
+                    if (blackHasPath)
+                    {
+                        Player.walls--; //player should loose a wall
 
-                    WhiteToMove = !WhiteToMove;
+                        WhiteToMove = !WhiteToMove;
 
-                    white.PushHistory();
-                    white.SetPath(whitePath.ToArray());
-                    black.PushHistory();
-                    black.SetPath(blackPath.ToArray());
-                    return true;
+                        white.PushHistory();
+                        if(!whiteHasValidPath) white.SetPath(whitePath.ToArray());
+                        black.PushHistory();
+                        if (!blackHasValidPath) black.SetPath(blackPath.ToArray());
+                        return true;
+                    }
                 }
-                else
-                {
-                    RemoveWall(move.x, move.y, move.type == MoveType.Horizontal);
-                }
+
+                RemoveWall(move.x, move.y, move.type == MoveType.Horizontal);
+                
 
             }
 
             return false;
         }
+
+
+        public bool CheckPathValidity(Point pos, Point[] path)
+        {
+            for (int i = path.Length - 1; i >= 0; --i)
+            {
+                int dx = pos.X - path[i].X;
+                if (dx > 0)
+                {
+                    if (!grid[pos.X, pos.Y].west) return false;
+                }
+                else if (dx < 0)
+                {
+                    if (!grid[pos.X, pos.Y].east) return false;
+                }
+                int dy = pos.Y - path[i].Y;
+                if (dy > 0)
+                {
+                    if (!grid[pos.X, pos.Y].south) return false;
+                }
+                else if (dy < 0)
+                {
+                    if (!grid[pos.X, pos.Y].north) return false;
+                }
+                pos = path[i];
+            }
+            return true;
+        }
+
 
         private bool ValidateWall(int x, int y, bool horizontal)
         {

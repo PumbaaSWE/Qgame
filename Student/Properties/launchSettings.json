@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Student": {
+      "commandName": "Project",
+      "commandLineArgs": "-d 3"
+    }
+  }
+}
