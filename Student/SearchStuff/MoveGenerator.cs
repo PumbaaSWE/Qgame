@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using QuoridorAI.BoardStuff;
+using System;
 using System.Collections.Generic;
 
 namespace QuoridorAI.SearchStuff
@@ -32,7 +33,8 @@ namespace QuoridorAI.SearchStuff
         {
             Player player = board.Player;
             List<Move> moves = new List<Move>(player.walls > 0 ? 133 : 5); //if we can place walls there is maximum 128 wall moves + 4 player moves(+ 1 extra)
-
+            
+            
             if (addPrevTopMove) moves.Add(prevTopMove);
 
             //presumably the along path should be searched first

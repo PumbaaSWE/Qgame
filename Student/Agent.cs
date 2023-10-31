@@ -15,7 +15,7 @@ class Agent:BaseAgent {
         //    }
         //    else if (args[i] == "-w")
         //    {
-        //        int weight = TryGetInt(args, ++i, "-d");
+        //        int weight = TryGetInt(args, ++i, "-w");
         //    }
         //}
         Program.Start(new Agent());
@@ -42,8 +42,10 @@ class Agent:BaseAgent {
     public Agent() {
         board = new Board();
         evaluator = new Evaluator(board);
+        //evaluator.WallWeight = wallWeight;
         moveGenerator = new MoveGenerator(board);
         searcher = new Searcher(board, evaluator, moveGenerator);
+        //searcher.SearchDepth = depth;
     }
     public override Drag SökNästaDrag(SpelBräde bräde) { 
 

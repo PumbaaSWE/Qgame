@@ -1,4 +1,5 @@
 ﻿using QuoridorAI.BoardStuff;
+using System;
 
 namespace QuoridorAI.SearchStuff
 {
@@ -25,6 +26,11 @@ namespace QuoridorAI.SearchStuff
 
             int whiteWalls = board.white.walls;
             int blackWalls = board.black.walls;
+
+            //if(whiteWalls + blackWalls == 0)//both players out of walls
+            //{
+            //    return Math.Sign(blackPathLen - whitePathLen)*LooseScore*turn; // then the one with shortest path will win
+            //}
 
             int eval = (blackPathLen - whitePathLen) * PathWeight + (whiteWalls - blackWalls) * WallWeight;
 
